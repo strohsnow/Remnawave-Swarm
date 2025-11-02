@@ -1,0 +1,93 @@
+services:
+  remnawave:
+    image: remnawave/backend:2
+    networks:
+      - remnawave-network
+      - edge-network
+    environment:
+      APP_PORT: 3000
+      METRICS_PORT: 3001
+      API_INSTANCES: 1
+      REDIS_HOST: remnawave-redis
+      REDIS_PORT: 6379
+      FRONT_END_DOMAIN: panel.domain.tld
+      SUB_PUBLIC_DOMAIN: sub.domain.tld
+      SWAGGER_PATH: /docs
+      SCALAR_PATH: /scalar
+      IS_DOCS_ENABLED: "false"
+      METRICS_USER: admin
+      IS_TELEGRAM_NOTIFICATIONS_ENABLED: "false"
+      TELEGRAM_BOT_TOKEN: "bot:token"
+      TELEGRAM_NOTIFY_USERS_CHAT_ID: 1234567890
+      TELEGRAM_NOTIFY_NODES_CHAT_ID: 1234567890
+      TELEGRAM_NOTIFY_CRM_CHAT_ID: 1234567890
+      HWID_DEVICE_LIMIT_ENABLED: "true"
+      HWID_FALLBACK_DEVICE_LIMIT: 5
+      HWID_MAX_DEVICES_ANNOUNCE: "You have reached the device limit"
+    secrets:
+      - remnawave-database-url
+      - remnawave-jwt-auth-secret
+      - remnawave-jwt-api-tokens-secret
+      - remnawave-metrics-pass
+    entrypoint: ["/bin/sh", "-lc"]
+    command: |
+      'export DATABASE_URL="$$(cat /run/secrets/remnawave-database-url)";
+       export JWT_AUTH_SECRET="$$(cat /run/secrets/remnawave-jwt-auth-secret)";
+       export JWT_API_TOKENS_SECRET="$$(cat /run/secrets/remnawave-jwt-api-tokens-secret)";
+       export METRICS_PASS="$$(cat /run/secrets/remnawave-metrics-pass)";
+       exec /bin/sh docker-entrypoint.sh pm2-runtime start ecosystem.config.js --env production'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${METRICS_PORT:-3001}/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+  remnawave-subscription-page:
+    image: remnawave/subscription-page:latest
+    networks:
+      - remnawave-network
+      - edge-network
+    configs:
+      - source: remnawave-subscription-page-config
+        target: /opt/app/frontend/assets/app-config.json
+    environment:
+      APP_PORT: 3010
+      REMNAWAVE_PANEL_URL: http://remnawave:3000
+      META_TITLE: "Subscription"
+      META_DESCRIPTION: "Subscription"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+networks:
+  remnawave-network:
+    driver: overlay
+    external: true
+  edge-network:
+    driver: overlay
+    external: true
+
+configs:
+  remnawave-subscription-page-config:
+    file: ./configs/remnawave-subscription-page-config.json
+
+secrets:
+  remnawave-database-url:
+    file: ./secrets/remnawave-database-url
+  remnawave-jwt-auth-secret:
+    file: ./secrets/remnawave-jwt-auth-secret
+  remnawave-jwt-api-tokens-secret:
+    file: ./secrets/remnawave-jwt-api-tokens-secret
+  remnawave-metrics-pass:
+    file: ./secrets/remnawave-metrics-pass
+

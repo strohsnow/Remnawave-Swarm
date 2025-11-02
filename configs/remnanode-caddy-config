@@ -1,0 +1,29 @@
+{
+  acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
+
+  storage redis {
+    host remnawave-redis
+  }
+
+  https_port 8443
+
+  servers {
+    listener_wrappers {
+      proxy_protocol {
+        allow 127.0.0.1/32
+      }
+      tls
+    }
+    protocols h1 h2
+  }
+}
+
+{$REALITY_DOMAIN} {
+  header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+  root * /usr/share/caddy
+  file_server
+}
+
+*.{$BASE_DOMAIN} {
+  abort
+}

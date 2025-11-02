@@ -1,0 +1,73 @@
+x-remnanode-base: &remnanode_base
+  image: remnawave/node:latest
+  networks:
+    - remnawave-network
+  ports:
+    - target: 443
+      published: 443
+      protocol: tcp
+      mode: host
+  environment:
+    NODE_PORT: 2222
+  entrypoint: ["/bin/sh", "-lc"]
+  command: |
+    'export SECRET_KEY="$$(cat /run/secrets/remnanode-secret-key)";
+     exec /usr/local/bin/docker-entrypoint.sh node dist/src/main'
+
+x-remnanode-caddy-base: &remnanode_caddy_base
+  image: strohsnow/caddy:2
+  networks:
+    - remnawave-network
+  configs:
+    - source: remnanode-caddy-config
+      target: /etc/caddy/Caddyfile
+  entrypoint: ["/bin/sh", "-lc"]
+  command: |
+    'export CLOUDFLARE_API_TOKEN="$$(cat /run/secrets/remnanode-caddy-cloudflare-api-token)";
+     exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile'
+
+services:
+  remnanode-node-domain-tld:
+    <<: *remnanode_base
+    secrets:
+      - source: remnanode-secret-key-node-domain-tld
+        target: remnanode-secret-key
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == node.domain.tld
+      restart_policy:
+        condition: on-failure
+
+  remnanode-caddy-node-domain-tld:
+    <<: *remnanode_caddy_base
+    environment:
+      BASE_DOMAIN: domain.tld
+      REALITY_DOMAIN: node.domain.tld
+    secrets:
+      - source: remnanode-caddy-cloudflare-api-token
+        target: remnanode-caddy-cloudflare-api-token
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == node.domain.tld
+      restart_policy:
+        condition: on-failure
+
+networks:
+  remnawave-network:
+    driver: overlay
+    external: true
+
+configs:
+  remnanode-caddy-config:
+    file: ./configs/remnanode-caddy-config
+
+secrets:
+  remnanode-secret-key-node-domain-tld:
+    file: ./secrets/remnanode-secret-key-node-domain-tld
+  remnanode-caddy-cloudflare-api-token:
+    file: ./secrets/remnanode-caddy-cloudflare-api-token
+

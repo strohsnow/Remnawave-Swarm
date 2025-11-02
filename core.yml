@@ -1,0 +1,63 @@
+services:
+  remnawave-db:
+    image: postgres:17.6
+    networks:
+      - remnawave-network
+    volumes:
+      - remnawave-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/remnawave-postgres-password
+      POSTGRES_DB: postgres
+      TZ: UTC
+    secrets:
+      - remnawave-postgres-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 10s
+      retries: 3
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+  remnawave-redis:
+    image: valkey/valkey:8.1-alpine
+    networks:
+      - remnawave-network
+      - edge-network
+    volumes:
+      - remnawave-redis-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 3s
+      timeout: 10s
+      retries: 3
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+networks:
+  remnawave-network:
+    driver: overlay
+    external: true
+  edge-network:
+    driver: overlay
+    external: true
+
+volumes:
+  remnawave-db-data:
+    driver: local
+  remnawave-redis-data:
+    driver: local
+
+secrets:
+  remnawave-postgres-password:
+    file: ./secrets/remnawave-postgres-password
+

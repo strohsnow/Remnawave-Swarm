@@ -1,0 +1,59 @@
+services:
+  remnawave-caddy:
+    image: strohsnow/caddy:2
+    networks:
+      - edge-network
+    ports:
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+    volumes:
+      - remnawave-caddy-data:/data/.local/caddy
+    configs:
+      - source: remnawave-caddy-config
+        target: /etc/caddy/Caddyfile
+    environment:
+      AUTH_TOKEN_LIFETIME: 21600
+      REMNAWAVE_BASE_DOMAIN: domain.tld
+      REMNAWAVE_PANEL_DOMAIN: panel.domain.tld
+      AUTHP_ADMIN_USER: user
+      AUTHP_ADMIN_EMAIL: user@mail.tld
+    secrets:
+      - remnawave-caddy-custom-login-route
+      - remnawave-caddy-authp-admin-secret
+      - remnawave-caddy-cloudflare-api-token
+    entrypoint: ["/bin/sh", "-lc"]
+    command: |
+      'export REMNAWAVE_CUSTOM_LOGIN_ROUTE="$$(cat /run/secrets/remnawave-caddy-custom-login-route)"; 
+       export AUTHP_ADMIN_SECRET="$$(cat /run/secrets/remnawave-caddy-authp-admin-secret)";
+       export CLOUDFLARE_API_TOKEN="$$(cat /run/secrets/remnawave-caddy-cloudflare-api-token)";
+       exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile'
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+networks:
+  edge-network:
+    driver: overlay
+    external: true
+
+volumes:
+  remnawave-caddy-data:
+    driver: local
+
+configs:
+  remnawave-caddy-config:
+    file: ./configs/remnawave-caddy-config
+
+secrets:
+  remnawave-caddy-custom-login-route:
+    file: ./secrets/remnawave-caddy-custom-login-route
+  remnawave-caddy-authp-admin-secret:
+    file: ./secrets/remnawave-caddy-authp-admin-secret
+  remnawave-caddy-cloudflare-api-token:
+    file: ./secrets/remnawave-caddy-cloudflare-api-token
+
