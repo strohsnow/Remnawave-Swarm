@@ -7,6 +7,10 @@ x-remnanode-base: &remnanode_base
       published: 443
       protocol: tcp
       mode: host
+    - target: 2222
+      published: 2222
+      protocol: tcp
+      mode: host
   environment:
     NODE_PORT: 2222
   entrypoint: ["/bin/sh", "-lc"]
