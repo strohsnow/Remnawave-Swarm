@@ -11,6 +11,8 @@ x-remnanode-base: &remnanode_base
       published: 2222
       protocol: tcp
       mode: host
+  volumes:
+    - /var/log/remnanode:/var/log/remnanode
   environment:
     NODE_PORT: 2222
   entrypoint: ["/bin/sh", "-lc"]
