@@ -40,11 +40,10 @@ services:
       retries: 3
       start_period: 30s
     deploy:
+      replicas: 1
       placement:
         constraints:
-          - node.role == manager
-      restart_policy:
-        condition: on-failure
+          - node.hostname == panel.domain.tld
 
   remnawave-subscription-page:
     image: remnawave/subscription-page:latest
@@ -60,11 +59,10 @@ services:
       META_TITLE: "Subscription"
       META_DESCRIPTION: "Subscription"
     deploy:
+      replicas: 1
       placement:
         constraints:
-          - node.role == manager
-      restart_policy:
-        condition: on-failure
+          - node.hostname == panel.domain.tld
 
 networks:
   remnawave-network:
@@ -87,4 +85,3 @@ secrets:
     file: ./secrets/remnawave-jwt-api-tokens-secret
   remnawave-metrics-pass:
     file: ./secrets/remnawave-metrics-pass
-
