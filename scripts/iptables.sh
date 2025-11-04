@@ -22,3 +22,5 @@ iptables -A INPUT -i tailscale0 -p udp --dport 4789 -j ACCEPT
 
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
+
+tailscale down && tailscale up
