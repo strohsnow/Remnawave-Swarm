@@ -39,12 +39,10 @@ services:
       - source: remnanode-secret-key-node-domain-tld
         target: remnanode-secret-key
     deploy:
+      replicas: 1
       placement:
         constraints:
-          - node.role == worker
           - node.hostname == node.domain.tld
-      restart_policy:
-        condition: on-failure
 
   remnanode-caddy-node-domain-tld:
     <<: *remnanode_caddy_base
@@ -55,12 +53,10 @@ services:
       - source: remnanode-caddy-cloudflare-api-token
         target: remnanode-caddy-cloudflare-api-token
     deploy:
+      replicas: 1
       placement:
         constraints:
-          - node.role == worker
           - node.hostname == node.domain.tld
-      restart_policy:
-        condition: on-failure
 
 networks:
   remnawave-network:
@@ -76,4 +72,3 @@ secrets:
     file: ./secrets/remnanode-secret-key-node-domain-tld
   remnanode-caddy-cloudflare-api-token:
     file: ./secrets/remnanode-caddy-cloudflare-api-token
-
