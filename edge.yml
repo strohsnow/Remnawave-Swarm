@@ -30,11 +30,10 @@ services:
        export CLOUDFLARE_API_TOKEN="$$(cat /run/secrets/remnawave-caddy-cloudflare-api-token)";
        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile'
     deploy:
+      replicas: 1
       placement:
         constraints:
-          - node.role == manager
-      restart_policy:
-        condition: on-failure
+          - node.hostname == panel.domain.tld
 
 networks:
   edge-network:
@@ -56,4 +55,3 @@ secrets:
     file: ./secrets/remnawave-caddy-authp-admin-secret
   remnawave-caddy-cloudflare-api-token:
     file: ./secrets/remnawave-caddy-cloudflare-api-token
-
