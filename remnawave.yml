@@ -28,7 +28,10 @@ services:
       - remnawave-metrics-pass
     entrypoint: ["/bin/sh", "-lc"]
     command: |
-      'export DATABASE_URL="$$(cat /run/secrets/remnawave-database-url)";
+      'until nc -z remnawave-db 5432 2>/dev/null && nc -z remnawave-redis 6379 2>/dev/null; do
+         sleep 1;
+       done;
+       export DATABASE_URL="$$(cat /run/secrets/remnawave-database-url)";
        export JWT_AUTH_SECRET="$$(cat /run/secrets/remnawave-jwt-auth-secret)";
        export JWT_API_TOKENS_SECRET="$$(cat /run/secrets/remnawave-jwt-api-tokens-secret)";
        export METRICS_PASS="$$(cat /run/secrets/remnawave-metrics-pass)";

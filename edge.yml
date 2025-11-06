@@ -25,7 +25,10 @@ services:
       - remnawave-caddy-cloudflare-api-token
     entrypoint: ["/bin/sh", "-lc"]
     command: |
-      'export REMNAWAVE_CUSTOM_LOGIN_ROUTE="$$(cat /run/secrets/remnawave-caddy-custom-login-route)"; 
+      'until nc -z remnawave-redis 6379 2>/dev/null; do
+         sleep 1;
+       done;
+       export REMNAWAVE_CUSTOM_LOGIN_ROUTE="$$(cat /run/secrets/remnawave-caddy-custom-login-route)"; 
        export AUTHP_ADMIN_SECRET="$$(cat /run/secrets/remnawave-caddy-authp-admin-secret)";
        export CLOUDFLARE_API_TOKEN="$$(cat /run/secrets/remnawave-caddy-cloudflare-api-token)";
        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile'
