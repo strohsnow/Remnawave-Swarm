@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+sudo apt-get update && sudo apt install -y logrotate
+
 sudo install -d -m 755 /var/log/remnanode
 
 sudo install -d -m 755 /etc/logrotate.d
@@ -13,4 +15,3 @@ sudo tee /etc/logrotate.d/remnanode > /dev/null << "EOF"
   copytruncate
 }
 EOF
-
